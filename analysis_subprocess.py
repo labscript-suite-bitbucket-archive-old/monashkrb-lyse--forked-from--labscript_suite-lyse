@@ -130,7 +130,7 @@ class Plot(object):
             self.ui.newWindow.connect(set_win_appusermodel)
 
         self.set_window_title(identifier, filepath)
-
+        self.id = identifier
         # figure.tight_layout()
         self.figure = figure
         self.canvas = FigureCanvas(figure)
@@ -280,7 +280,7 @@ class AnalysisWorker(object):
         sandbox.deprecation_messages['path'] = deprecation_message
         # Use lyse.path instead:
         lyse.path = path
-
+        lyse.plots = self.plots
         # Do not let the modulewatcher unload any modules whilst we're working:
         try:
             with self.modulewatcher.lock:
