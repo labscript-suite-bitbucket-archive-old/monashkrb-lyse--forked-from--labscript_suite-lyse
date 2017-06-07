@@ -167,6 +167,10 @@ class Plot(object):
         
         self.canvas.mpl_connect('pick_event', self.onPick)
 
+        self.clear_points_of_interest_action = self.navigation_toolbar.addAction(
+            QtGui.QIcon(':qtutils/fugue/target--exclamation'),
+           'Clear all points of interest',self.on_clear_points_of_interest_triggered)
+        self.clear_points_of_interest_action.setToolTip('Cear all points of interest')
         
         self.ui.verticalLayout_canvas.addWidget(self.canvas)
         self.ui.verticalLayout_navigation_toolbar.addWidget(self.navigation_toolbar)
@@ -210,7 +214,20 @@ class Plot(object):
             if self.points_of_interest_action.isChecked():
                 self.points_of_interest_action.setChecked(False)
             self.navigation_toolbar.set_message('Remove points of interest')
-            
+    
+
+    @inmain_decorator()
+    def on_clear_points_of_interest_triggered(self):
+        for i, ax in enumerate(self.figure.axes):
+            artists = ax.get_children()
+            for child in artists:
+                if child.get_label() == "POI":
+                    try:
+                        child.remove()
+                    except:
+                        pass
+        self.draw()
+    
     @inmain_decorator()
     def canvasClicked( self, event ):
         if self.points_of_interest_action.isChecked():
