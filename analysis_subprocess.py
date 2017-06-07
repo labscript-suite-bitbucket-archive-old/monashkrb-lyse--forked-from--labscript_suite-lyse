@@ -121,6 +121,7 @@ class PlotWindow(QtGui.QWidget):
         
 
 class Plot(object):
+       
     def __init__(self, figure, identifier, filepath):
         loader = UiLoader()
         self.ui = loader.load('plot_window.ui', PlotWindow())
@@ -148,7 +149,25 @@ class Plot(object):
         self.copy_to_clipboard_action.setToolTip('Copy to clipboard')
         self.copy_to_clipboard_action.setShortcut(QtGui.QKeySequence.Copy)
 
+        
+        self.points_of_interest_action = self.navigation_toolbar.addAction(
+            QtGui.QIcon(':qtutils/fugue/target--plus'),
+           'Add points of interest',self.on_add_points_of_interest_triggered)
+        self.points_of_interest_action.setToolTip('Add points of interest')
+        self.points_of_interest_action.setCheckable(True)
+        
+        self.canvas.mpl_connect('button_press_event',self.canvasClicked)
 
+
+        self.remove_points_of_interest_action = self.navigation_toolbar.addAction(
+            QtGui.QIcon(':qtutils/fugue/target--minus'),
+           'Remove points of interest',self.on_remove_points_of_interest_triggered)
+        self.remove_points_of_interest_action.setToolTip('Remove points of interest')
+        self.remove_points_of_interest_action.setCheckable(True)
+        
+        self.canvas.mpl_connect('pick_event', self.onPick)
+
+        
         self.ui.verticalLayout_canvas.addWidget(self.canvas)
         self.ui.verticalLayout_navigation_toolbar.addWidget(self.navigation_toolbar)
 
@@ -169,7 +188,66 @@ class Plot(object):
 
     def on_copy_to_clipboard_triggered(self):
         lyse.figure_to_clipboard(self.figure)
+    
+    @inmain_decorator()
+    def on_add_points_of_interest_triggered(self):
+        if self.points_of_interest_action.isChecked():            
+            if self.navigation_toolbar._active == "PAN":
+                self.navigation_toolbar.pan()
+            elif self.navigation_toolbar._active == "ZOOM":
+                self.navigation_toolbar.zoom()
+            if self.remove_points_of_interest_action.isChecked():
+                self.remove_points_of_interest_action.setChecked(False)
+            self.navigation_toolbar.set_message('Add points of interest')
+    
+    @inmain_decorator()
+    def on_remove_points_of_interest_triggered(self):
+        if self.remove_points_of_interest_action.isChecked():            
+            if self.navigation_toolbar._active == "PAN":
+                self.navigation_toolbar.pan()
+            elif self.navigation_toolbar._active == "ZOOM":
+                self.navigation_toolbar.zoom()
+            if self.points_of_interest_action.isChecked():
+                self.points_of_interest_action.setChecked(False)
+            self.navigation_toolbar.set_message('Remove points of interest')
+            
+    @inmain_decorator()
+    def canvasClicked( self, event ):
+        if self.points_of_interest_action.isChecked():
+            button=event.button
+            x=event.xdata
+            y=event.ydata
+            ax = event.inaxes
+            ax.plot(x,y,'ro',label = "POI", picker = True)
+            
+            self.draw()
+            
+    @inmain_decorator()
+    def onPick(self,event):
+        if self.remove_points_of_interest_action.isChecked():
+            if event.artist.get_label() == "POI":
+                event.artist.remove()
+                self.draw()
+            
+    
+    @inmain_decorator()
+    def save_points_of_interest(self):
+        points_of_interest = {}
+        for i, ax in enumerate(self.figure.axes):
+            points = []
+            artists = ax.get_children()
+            for child in artists:
+                if child.get_label() == "POI":
+                    try:
+                        points.append(child.get_xydata())
+                    except:
+                        pass
+                    
+            points_of_interest[i] = points
+        
 
+        self.points_of_interest = points_of_interest
+    
     @inmain_decorator()
     def save_axis_limits(self):
         axis_limits = {}
@@ -301,6 +379,7 @@ class AnalysisWorker(object):
     def pre_analysis_plot_actions(self):
         for plot in self.plots.values():
             plot.save_axis_limits()
+            plot.save_points_of_interest()
             plot.clear()
 
     def post_analysis_plot_actions(self):
