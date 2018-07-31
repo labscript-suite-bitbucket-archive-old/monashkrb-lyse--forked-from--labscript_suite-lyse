@@ -37,12 +37,8 @@ matplotlib.use("QT4Agg")
 
 import lyse
 lyse.spinning_top = True
-import lyse.figure_manager
-lyse.figure_manager.install()
 
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
-import pylab
+
 import zprocess.locking, labscript_utils.h5_lock, h5py
 
 import zprocess
@@ -429,8 +425,16 @@ class AnalysisWorker(object):
     def reset_figs(self):
         pass
         
-        
+def asd(x):
+    print x        
+
 if __name__ == '__main__':
+    import lyse.figure_manager
+    lyse.figure_manager.install()
+
+    from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
+    from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
+    import pylab
     filepath = from_parent.get()
     
     # Set a meaningful client id for zprocess.locking:
